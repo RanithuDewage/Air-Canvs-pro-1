@@ -1,4 +1,10 @@
-# Air Canvas pro - Developed by RUSH 🎨🖐️
+# Air Canvas - Version 1.0 |Developed by RUSH 🎨🖐️
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python">
+  <img src="https://img.shields.io/badge/OpenCV-Computer%20Vision-green?logo=opencv">
+  <img src="https://img.shields.io/badge/Status-Active-success">
+  <img src="https://img.shields.io/badge/License-MIT-orange">
+</p>
 
 An intelligent **air canvas drawing application** built with **Python**, **OpenCV**, and **MediaPipe**.  
 This project allows users to control a virtual pointer and draw shapes in the air using hand gestures captured from a webcam.
