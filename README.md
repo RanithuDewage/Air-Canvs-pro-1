@@ -1,4 +1,4 @@
-# Air Canvas - Version 1.0 |Developed by RUSH 🎨🖐️
+🎨# Air Canvas - Version 1.0 |Developed by RUSH ✓
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python">
   <img src="https://img.shields.io/badge/OpenCV-Computer%20Vision-green?logo=opencv">
