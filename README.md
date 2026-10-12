@@ -47,14 +47,6 @@ It is designed as an interactive and touchless drawing system suitable for creat
 
 ---
 
-## 📷 Demo Preview
-
-> record_20260419_111038.avi
-
-![App Screenshot](image.png)
-
----
-
 ## 📁 Project Structure
 
 ```bash
