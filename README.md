@@ -22,7 +22,7 @@
 
 ## 📌 Overview
 
-**RUSHX Air Canvas Pro** is an interactive, real-time computer vision drawing application built with **Python**, **OpenCV**, and **Google MediaPipe**. By tracking 21 3D hand landmarks per hand at high frame rates, the engine translates natural finger gestures into drawing strokes, geometric shapes, dynamic brush sizing, tool selections, and canvas actions without touching a mouse or screen.
+**Air Canvas Pro** is an interactive, real-time computer vision drawing application built with **Python**, **OpenCV**, and **Google MediaPipe**. By tracking 21 3D hand landmarks per hand at high frame rates, the engine translates natural finger gestures into drawing strokes, geometric shapes, dynamic brush sizing, tool selections, and canvas actions without touching a mouse or screen.
 
 Designed for smooth performance, it features **moving-average stroke smoothing**, **stamp-interpolated continuous lines**, **multi-hand tracking** (up to 2 hands simultaneously), **full stroke history (Undo)**, **live video recording**, and **dual-layer snapshot exports**.
 
