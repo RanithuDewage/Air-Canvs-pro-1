@@ -1,12 +1,101 @@
 import cv2
-import mediapipe as mp
 import numpy as np
 import time
 import math
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from collections import deque
 from pathlib import Path
+
+# Compatibility shim for Protobuf 5+/6+/7+ with MediaPipe
+try:
+    import google.protobuf.message_factory as _mf
+    import google.protobuf.symbol_database as _sd
+    if not hasattr(_mf.MessageFactory, "GetPrototype"):
+        _mf.MessageFactory.GetPrototype = lambda self, desc: _mf.GetMessageClass(desc)
+    if not hasattr(_sd.SymbolDatabase, "GetPrototype"):
+        _sd.SymbolDatabase.GetPrototype = lambda self, desc: _mf.GetMessageClass(desc)
+except Exception:
+    pass
+
+import mediapipe as mp
+
+try:
+    from mediapipe.python import solution_base as _sb
+
+    def _patched_modify_calculator_options(self, calculator_graph_config, calculator_params):
+        def generate_nested_calculator_params(flat_map):
+            nested_map = {}
+            for compound_name, field_value in flat_map.items():
+                parts = compound_name.split(".")
+                if len(parts) != 2:
+                    raise ValueError(f'The key "{compound_name}" in the calculator_params is invalid.')
+                nested_map.setdefault(parts[0], []).append((parts[1], field_value))
+            return nested_map
+
+        def modify_options_fields(calculator_options, options_field_list):
+            for field_name, field_value in options_field_list:
+                if field_value is None:
+                    calculator_options.ClearField(field_name)
+                else:
+                    f_desc = calculator_options.DESCRIPTOR.fields_by_name[field_name]
+                    is_repeated = (
+                        f_desc.is_repeated
+                        if hasattr(f_desc, "is_repeated")
+                        else (f_desc.label == _sb.descriptor.FieldDescriptor.LABEL_REPEATED)
+                    )
+                    if is_repeated:
+                        if not isinstance(field_value, Iterable):
+                            raise ValueError(
+                                f"{field_name} is a repeated proto field but the value "
+                                f"to be set is {type(field_value)}, which is not iterable."
+                            )
+                        calculator_options.ClearField(field_name)
+                        for elem in field_value:
+                            getattr(calculator_options, field_name).append(elem)
+                    else:
+                        setattr(calculator_options, field_name, field_value)
+
+        nested_calculator_params = generate_nested_calculator_params(calculator_params)
+        num_modified = 0
+        for node in calculator_graph_config.node:
+            if node.name not in nested_calculator_params:
+                continue
+            options_type = _sb.CALCULATOR_TO_OPTIONS.get(node.calculator)
+            if options_type is None:
+                raise ValueError(f"Modifying the calculator options of {node.name} is not supported.")
+            options_field_list = nested_calculator_params[node.name]
+            if node.HasField("options") and node.node_options:
+                raise ValueError(
+                    f"Cannot modify the calculator options of {node.name} because it "
+                    f"has both options and node_options fields."
+                )
+            if node.node_options:
+                node_options_modified = False
+                for elem in node.node_options:
+                    type_name = elem.type_url.split("/")[-1]
+                    if type_name == options_type.DESCRIPTOR.full_name:
+                        calculator_options = options_type.FromString(elem.value)
+                        modify_options_fields(calculator_options, options_field_list)
+                        elem.value = calculator_options.SerializeToString()
+                        node_options_modified = True
+                        break
+                if not node_options_modified:
+                    calculator_options = options_type()
+                    modify_options_fields(calculator_options, options_field_list)
+                    node.node_options.add().Pack(calculator_options)
+            else:
+                modify_options_fields(node.options.Extensions[options_type.ext], options_field_list)
+            num_modified += 1
+            if num_modified == len(nested_calculator_params):
+                break
+        if num_modified < len(nested_calculator_params):
+            raise ValueError("Not all calculator params are valid.")
+
+    _sb.SolutionBase._modify_calculator_options = _patched_modify_calculator_options
+except Exception:
+    pass
 
 
 # =========================
