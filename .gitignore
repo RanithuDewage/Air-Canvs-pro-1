@@ -1,29 +1,40 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
 *.pyd
 
-# Virtual environment
+# Virtual environments
+.venv/
 venv/
 env/
+ENV/
 
-# OS files
-.DS_Store
-Thumbs.db
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
 
-# IDE
+# IDE & Editor folders
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Logs
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & local env
 *.log
-
-# Environment variables
 .env
+.env.*
 
-# Optional media outputs
+# Application outputs (snapshots & screen recordings)
+captures/
 *.mp4
 *.avi
 *.mov
-captures/

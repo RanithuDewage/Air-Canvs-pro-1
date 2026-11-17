@@ -189,6 +189,8 @@ class VirtualPainter:
     def __init__(self):
         if os.name == "nt":
             self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            if not self.cap.isOpened():
+                self.cap = cv2.VideoCapture(0)
         else:
             self.cap = cv2.VideoCapture(0)
 
@@ -259,32 +261,34 @@ class VirtualPainter:
     def build_buttons(self):
         buttons = []
         x = 10
-        y = 18
-        bw = 44
+        y = 22
+        bw = 40
         bh = 44
-        gap = 8
+        gap = 6
 
         for name, color in PALETTE:
             buttons.append(Button(name=name, rect=(x, y, x + bw, y + bh), kind="color", value=color))
             x += bw + gap
 
-        x += 12
+        x += 10
 
         for size in BRUSH_PRESETS:
             buttons.append(Button(name=str(size), rect=(x, y, x + bw, y + bh), kind="brush", value=size))
             x += bw + gap
 
-        x += 16
+        x += 12
 
-        buttons.append(Button(name="Pen", rect=(x, y, x + 78, y + bh), kind="tool", value="pen"))
-        x += 86
-        buttons.append(Button(name="Eraser", rect=(x, y, x + 92, y + bh), kind="tool", value="eraser"))
-        x += 100
-        buttons.append(Button(name="Shape", rect=(x, y, x + 86, y + bh), kind="mode", value="shape"))
-        x += 94
-        buttons.append(Button(name="Undo", rect=(x, y, x + 78, y + bh), kind="action", value="undo"))
-        x += 86
-        buttons.append(Button(name="Clear", rect=(x, y, x + 82, y + bh), kind="action", value="clear"))
+        buttons.append(Button(name="Pen", rect=(x, y, x + 68, y + bh), kind="tool", value="pen"))
+        x += 76
+        buttons.append(Button(name="Eraser", rect=(x, y, x + 80, y + bh), kind="tool", value="eraser"))
+        x += 88
+        buttons.append(Button(name="Shape", rect=(x, y, x + 76, y + bh), kind="mode", value="shape"))
+        x += 84
+        buttons.append(Button(name="Undo", rect=(x, y, x + 68, y + bh), kind="action", value="undo"))
+        x += 76
+        buttons.append(Button(name="Clear", rect=(x, y, x + 70, y + bh), kind="action", value="clear"))
+        x += 78
+        buttons.append(Button(name="Save", rect=(x, y, x + 68, y + bh), kind="action", value="save"))
 
         return buttons
 
@@ -309,8 +313,8 @@ class VirtualPainter:
         cv2.rectangle(overlay, (0, 0), (WIDTH, TOP_H), (20, 20, 20), -1)
         cv2.addWeighted(overlay, 0.60, frame, 0.40, 0, frame)
 
-        cv2.putText(frame, "RUSHX AIR CANVAS", (10, 15),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 120), 1, cv2.LINE_AA)
+        cv2.putText(frame, "RUSHX AIR CANVAS", (10, 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 255, 120), 1, cv2.LINE_AA)
 
         for btn in self.buttons:
             x1, y1, x2, y2 = btn.rect
@@ -346,15 +350,15 @@ class VirtualPainter:
             cv2.rectangle(frame, (x1, y1), (x2, y2), border, 2)
 
             if btn.kind in ("brush", "tool", "action", "mode"):
-                self.draw_center_text(frame, btn.name, btn.rect, scale=0.50, color=(255, 255, 255), thickness=2)
+                self.draw_center_text(frame, btn.name, btn.rect, scale=0.48, color=(255, 255, 255), thickness=2)
 
-        cv2.circle(frame, (WIDTH - 34, 41), 16, self.current_color, -1)
-        cv2.circle(frame, (WIDTH - 34, 41), 16, (255, 255, 255), 2)
+        cv2.circle(frame, (WIDTH - 34, 44), 16, self.current_color, -1)
+        cv2.circle(frame, (WIDTH - 34, 44), 16, (255, 255, 255), 2)
 
         if self.recording:
-            cv2.rectangle(frame, (WIDTH - 120, 10), (WIDTH - 18, 34), (0, 0, 180), -1)
-            cv2.putText(frame, "REC", (WIDTH - 93, 28),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.rectangle(frame, (WIDTH - 135, 26), (WIDTH - 62, 60), (0, 0, 180), -1)
+            cv2.putText(frame, "REC", (WIDTH - 120, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.62, (255, 255, 255), 2, cv2.LINE_AA)
 
         cv2.line(frame, (0, TOP_H), (WIDTH, TOP_H), (90, 90, 90), 1)
 
@@ -388,7 +392,7 @@ class VirtualPainter:
         x = self.draw_badge(frame, x, y, f"REC {rec_state}", (0, 0, 180) if rec_state == "ON" else (90, 90, 90))
         x = self.draw_badge(frame, x, y, f"HANDS {hands_count}", (60, 60, 60))
 
-        cv2.putText(frame, f"Mode: {self.mode}   Brush: {self.current_brush}   Shape: {self.shape_type}",
+        cv2.putText(frame, f"Mode: {self.mode}   Brush: {self.current_brush}   Shape: {self.shape_type}   [H: Help]",
                     (12, HEIGHT - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (190, 190, 190), 1, cv2.LINE_AA)
 
         if time.time() < self.message_until:
@@ -403,31 +407,33 @@ class VirtualPainter:
             return
 
         lines = [
-            "1 finger = draw",
+            "1 finger = draw / use active tool",
             "2 fingers = toolbar select",
-            "3 fingers = erase",
+            "3 fingers = quick erase",
             "5 fingers = pause",
             "Pinch = brush size",
-            "Fist hold = clear",
-            "m = shape mode",
+            "Fist hold = clear canvas",
+            "p / e = pen / eraser",
+            "z / c = undo / clear",
+            "1-5 = brush size presets",
+            "m = shape mode on/off",
             "l / b / o = line / rect / circle",
-            "r = record on/off",
-            "s = save snapshot",
-            "q = quit",
+            "r / s = record / save snapshot",
+            "h / q = toggle help / quit",
         ]
 
-        x, y = 930, 95
-        w, h = 320, 250
+        x, y = 920, 92
+        w, h = 340, 290
         overlay = frame.copy()
         cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 0), -1)
         cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
 
         cv2.rectangle(frame, (x, y), (x + w, y + h), (80, 80, 80), 2)
-        cv2.putText(frame, "Help", (x + 12, y + 22), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 120), 2, cv2.LINE_AA)
+        cv2.putText(frame, "Help & Shortcuts", (x + 12, y + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 120), 2, cv2.LINE_AA)
 
-        yy = y + 48
+        yy = y + 50
         for ln in lines:
-            cv2.putText(frame, ln, (x + 14, yy), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(frame, ln, (x + 14, yy), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (255, 255, 255), 1, cv2.LINE_AA)
             yy += 20
 
     # =========================
@@ -747,7 +753,7 @@ class VirtualPainter:
         if gesture == "PINCH":
             self.finish_state(state)
 
-            new_brush = int(np.interp(np.clip(pinch_ratio, 0.12, 0.85), [0.12, 0.85], [4, 36]))
+            new_brush = int(np.interp(np.clip(pinch_ratio, 0.12, 0.44), [0.12, 0.44], [4, 36]))
             new_brush = int(np.clip(new_brush, 2, 50))
 
             if abs(new_brush - self.current_brush) >= 1:
@@ -775,10 +781,9 @@ class VirtualPainter:
             self.draw_hand_info(frame, lm_list, hand_name, gesture)
             return gesture
 
-        # Three fingers = erase
+        # Three fingers = quick erase
         if gesture == "THREE":
             self.finish_shape(state)
-            self.tool = "eraser"
             self.mode = "ERASE"
 
             if iy > TOP_H + 5:
@@ -796,7 +801,7 @@ class VirtualPainter:
             self.draw_hand_info(frame, lm_list, hand_name, gesture)
             return gesture
 
-        # One finger = ALWAYS draw
+        # One finger = draw or use selected tool (pen / eraser / shape)
         if gesture == "POINT":
             if self.global_mode == "shape":
                 self.mode = "SHAPE"
@@ -808,21 +813,22 @@ class VirtualPainter:
                 else:
                     self.finish_shape(state)
             else:
-                # IMPORTANT:
-                # When 1 finger appears, auto switch back to pen/draw mode
-                self.tool = "pen"
-
                 if iy > TOP_H + 5:
                     pt = self.smooth_point(state, (ix, iy))
-                    desired_sig = ("pen", self.current_color, self.current_brush)
+                    if self.tool == "eraser":
+                        desired_sig = ("erase", max(48, self.current_brush * 6))
+                        action_kind = "erase"
+                        self.mode = "ERASE"
+                    else:
+                        desired_sig = ("pen", self.current_color, self.current_brush)
+                        action_kind = "pen"
+                        self.mode = "DRAW"
 
                     if state["action"] is None or state["sig"] != desired_sig:
                         self.finish_action(state)
-                        self.begin_action(state, pt, kind="pen")
+                        self.begin_action(state, pt, kind=action_kind)
                     else:
                         self.extend_action(state, pt)
-
-                    self.mode = "DRAW"
                 else:
                     self.finish_action(state)
                     self.finish_shape(state)
@@ -847,6 +853,9 @@ class VirtualPainter:
             ok, frame = self.cap.read()
             if not ok:
                 break
+
+            if frame.shape[1] != WIDTH or frame.shape[0] != HEIGHT:
+                frame = cv2.resize(frame, (WIDTH, HEIGHT))
 
             frame = cv2.flip(frame, 1)
 
@@ -901,15 +910,22 @@ class VirtualPainter:
             self.draw_status(display, len(hands))
             self.draw_help(display)
 
-            # cursor only below toolbar
+            # cursor visible across canvas and toolbar
             if hands:
                 for idx, _ in enumerate(hands):
                     lm_list = self.tracker.get_landmarks(frame, results, hand_index=idx, draw=False)
                     if lm_list:
                         ix, iy = lm_list[8][1], lm_list[8][2]
-                        if iy > TOP_H + 6:
-                            cursor_color = (0, 255, 255) if self.mode == "SELECT" else (0, 255, 0) if self.mode == "DRAW" else (255, 255, 255)
-                            cv2.circle(display, (ix, iy), 6, cursor_color, -1, cv2.LINE_AA)
+                        if "TWO" in self.mode:
+                            cursor_color = (0, 255, 255)
+                        elif "THREE" in self.mode or (self.tool == "eraser" and "POINT" in self.mode):
+                            cursor_color = (0, 140, 255)
+                        elif "POINT" in self.mode:
+                            cursor_color = (0, 255, 0)
+                        else:
+                            cursor_color = (255, 255, 255)
+                        cv2.circle(display, (ix, iy), 6, cursor_color, -1, cv2.LINE_AA)
+                        cv2.circle(display, (ix, iy), 8, (0, 0, 0), 1, cv2.LINE_AA)
 
             cv2.imshow(WINDOW_NAME, display)
 
