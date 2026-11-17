@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎨 RUSHX Air Canvas Pro
+# 🎨 Air Canvas Pro
 
 **Real-Time Touchless Virtual Drawing & Gesture-Controlled Canvas powered by Computer Vision**
 
